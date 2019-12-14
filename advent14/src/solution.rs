@@ -30,7 +30,7 @@ impl Element {
     }
 }
 
-pub fn part1(input: &str) -> impl Display {
+pub fn part1(input: &str) -> usize {
     let mut reacts = HashMap::new();
     for line in input.lines() {
         let comp = line.trim().split(" => ").collect::<Vec<&str>>();
@@ -42,26 +42,35 @@ pub fn part1(input: &str) -> impl Display {
         reacts.insert(Element::from_str(comp[1]), formula);
     }
 
-    let fuel_reaction = reacts
-        .get(&Element {
+    let mut stash = HashMap::new();
+    produce_fuel(
+        &reacts,
+        &mut stash,
+        &Element {
             amount: 1,
             name: "FUEL".to_owned(),
-        })
-        .unwrap();
+        },
+    )
+}
 
+fn produce_fuel(
+    reacts: &HashMap<Element, Vec<Element>>,
+    stash: &mut HashMap<String, usize>,
+    element: &Element,
+) -> usize {
     let mut stack: VecDeque<Element> = VecDeque::new();
+    let mut final_formula = HashMap::new();
+    let fuel_reaction = reacts.get(&element).unwrap();
+
     for fuel_input in fuel_reaction {
-        stack.push_back(fuel_input.clone());
+        stack.push_back(Element {
+            amount: fuel_input.amount * element.amount,
+            name: fuel_input.name.clone(),
+        });
     }
 
-    // let mut final_formula = vec![];
-    let mut final_formula = HashMap::new();
-    let mut stash = HashMap::new();
-
     while !stack.is_empty() {
-        println!("-----");
         let mut needed = stack.pop_front().unwrap();
-        println!("needed_element {:?}", needed);
         if is_basic(&reacts, &needed) {
             let entry = final_formula.entry(needed.name).or_insert(0);
             *entry += needed.amount;
@@ -69,12 +78,9 @@ pub fn part1(input: &str) -> impl Display {
         }
 
         let (base_reaction, ingredients) = reacts.get_key_value(&needed).unwrap();
-        println!("base_reaction {:?}", base_reaction);
-
         let stash_amount = stash.entry(needed.name.clone()).or_insert(0);
         if *stash_amount >= needed.amount {
             *stash_amount -= needed.amount;
-            println!("{} taken from stash", needed.amount);
             continue;
         } else if *stash_amount > 0 {
             needed.amount -= *stash_amount;
@@ -84,29 +90,18 @@ pub fn part1(input: &str) -> impl Display {
         let reaction_number_needed = round_division(needed.amount, base_reaction.amount);
         let produced_amount = reaction_number_needed * base_reaction.amount;
         if produced_amount > needed.amount {
-            println!(
-                "putting {} of {} in stash",
-                produced_amount - needed.amount,
-                needed.name
-            );
             *stash_amount += produced_amount - needed.amount;
         }
 
         for ingredient in ingredients {
             let ingredient_needed_amount = ingredient.amount * reaction_number_needed;
             let new_name = ingredient.name.clone();
-
-            println!(
-                "ingredient {:?} ingredient_needed_amount {} new_name {}",
-                ingredient, ingredient_needed_amount, new_name
-            );
             stack.push_back(Element {
                 amount: ingredient_needed_amount,
                 name: new_name,
             });
         }
     }
-    print_formula(&final_formula);
 
     let mut total_ore = 0;
     for (element_name, amount) in final_formula {
@@ -117,10 +112,8 @@ pub fn part1(input: &str) -> impl Display {
             })
             .unwrap();
         let more_ore = round_division(amount, el.amount) * ore[0].amount;
-        println!("{} more ore for {}", more_ore, el.name);
         total_ore += more_ore;
     }
-
     total_ore
 }
 
@@ -129,21 +122,6 @@ fn round_division(a: usize, b: usize) -> usize {
         return a / b;
     }
     a / b + 1
-}
-
-fn print_formula(formula: &HashMap<String, usize>) {
-    for (element, amount) in formula {
-        println!("{} {} +", amount, element)
-    }
-    println!("=> 1 FUEL");
-    // println!(
-    //     "{} => 1 FUEL",
-    //     formula
-    //         .iter()
-    //         .map(|el| format!("{} {}", el.amount, el.name))
-    //         .collect::<Vec<String>>()
-    //         .join(" + ")
-    // )
 }
 
 fn is_basic(reacts: &HashMap<Element, Vec<Element>>, e: &Element) -> bool {
@@ -158,5 +136,54 @@ fn is_basic(reacts: &HashMap<Element, Vec<Element>>, e: &Element) -> bool {
 }
 
 pub fn part2(input: &str) -> impl Display {
-    0
+    let mut reacts = HashMap::new();
+    for line in input.lines() {
+        let comp = line.trim().split(" => ").collect::<Vec<&str>>();
+        let formula = comp[0]
+            .trim()
+            .split(",")
+            .map(|x| Element::from_str(x))
+            .collect::<Vec<Element>>();
+        reacts.insert(Element::from_str(comp[1]), formula);
+    }
+
+    let first_fuel = part1(input);
+    let fuel_reaction = reacts
+        .get(&Element {
+            amount: 1,
+            name: "FUEL".to_owned(),
+        })
+        .unwrap();
+
+    let start_ore: usize = 1000000000000;
+
+    let mut max_attempt = start_ore;
+    let mut min_attempt = 0;
+    loop {
+        let candidate = min_attempt + (max_attempt - min_attempt) / 2;
+        let total_ore_used = produce_fuel(
+            &reacts,
+            &mut HashMap::new(),
+            &Element {
+                amount: candidate,
+                name: "FUEL".to_owned(),
+            },
+        );
+        let total_ore_used_and_one = produce_fuel(
+            &reacts,
+            &mut HashMap::new(),
+            &Element {
+                amount: candidate + 1,
+                name: "FUEL".to_owned(),
+            },
+        );
+        if total_ore_used_and_one > start_ore && total_ore_used < start_ore {
+            return candidate;
+        }
+        if total_ore_used > start_ore {
+            max_attempt = candidate;
+        } else {
+            min_attempt = candidate;
+        }
+    }
 }
