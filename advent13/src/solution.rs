@@ -1,4 +1,5 @@
-use crate::intcode;
+include!("intcode.rs");
+
 use std::collections::HashMap;
 use std::fmt::Display;
 use std::thread::sleep;
@@ -7,7 +8,7 @@ use std::time::Duration;
 pub fn part1(input: &str) -> impl Display {
     let mut board = HashMap::new();
 
-    let mut computer = intcode::Computer::from(input);
+    let mut computer = Computer::from(input);
 
     while !computer.has_halted() {
         if computer.is_waiting() {
@@ -31,7 +32,7 @@ pub fn part1(input: &str) -> impl Display {
 }
 
 fn board_size(input: &str) -> (usize, usize) {
-    let mut computer = intcode::Computer::from(input);
+    let mut computer = Computer::from(input);
     let mut max_x = 0;
     let mut max_y = 0;
     while !computer.has_halted() {
@@ -64,13 +65,13 @@ fn board_size(input: &str) -> (usize, usize) {
 }
 
 pub fn part2(input: &str) -> impl Display {
-    clear_screen();
-    let (max_x, max_y) = board_size(input);
+    //clear_screen();
+    //let (max_x, max_y) = board_size(input);
 
-    let mut computer = intcode::Computer::from(input);
+    let mut computer = Computer::from(input);
     computer.store_mem(0, 2);
 
-    let mut board = vec![vec![0; max_x]; max_y];
+    //let mut board = vec![vec![0; max_x]; max_y];
     let mut joystick_position = 0;
     let mut current_ball_position = (0, 0);
     let mut current_paddle_position = (0, 0);
@@ -82,7 +83,6 @@ pub fn part2(input: &str) -> impl Display {
         } else {
             computer.run();
         }
-        //= (0, 0);
         loop {
             let x_out = computer.pop_output();
             let x;
@@ -92,7 +92,7 @@ pub fn part2(input: &str) -> impl Display {
             }
             let y = computer.pop_output().unwrap();
             let tile_id = computer.pop_output().unwrap();
-            if (x, y) == (-1, 0) {
+            if (x as isize, y as isize) == (-1, 0) {
                 score = tile_id;
                 continue;
             }
@@ -111,12 +111,12 @@ pub fn part2(input: &str) -> impl Display {
             } else {
                 joystick_position = -1
             }
-            board[y as usize][x as usize] = tile_id;
+            //board[y as usize][x as usize] = tile_id;
         }
-        go_to_top();
-        println!("score {} input {}     ", score, joystick_position);
-        print_board(&board);
-        sleep(Duration::from_millis(25));
+        // go_to_top();
+        // println!("score {} input {}     ", score, joystick_position);
+        // print_board(&board);
+        // sleep(Duration::from_millis(25));
     }
     score
 }
