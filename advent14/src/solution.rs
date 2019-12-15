@@ -31,52 +31,58 @@ impl Element {
 }
 
 pub fn part1(input: &str) -> usize {
-    let mut reacts = HashMap::new();
-    for line in input.lines() {
-        let comp = line.trim().split(" => ").collect::<Vec<&str>>();
-        let formula = comp[0]
-            .trim()
-            .split(",")
-            .map(|x| Element::from_str(x))
-            .collect::<Vec<Element>>();
-        reacts.insert(Element::from_str(comp[1]), formula);
-    }
-
-    let mut stash = HashMap::new();
-    produce_fuel(
+    let reacts = parse(input);
+    produce(
         &reacts,
-        &mut stash,
-        &Element {
+        Element {
             amount: 1,
             name: "FUEL".to_owned(),
         },
     )
 }
 
-fn produce_fuel(
-    reacts: &HashMap<Element, Vec<Element>>,
-    stash: &mut HashMap<String, usize>,
-    element: &Element,
-) -> usize {
-    let mut stack: VecDeque<Element> = VecDeque::new();
-    let mut final_formula = HashMap::new();
-    let fuel_reaction = reacts.get(&element).unwrap();
+pub fn part2(input: &str) -> impl Display {
+    let reacts = parse(input);
+    let start_ore: usize = 1000000000000;
 
-    for fuel_input in fuel_reaction {
-        stack.push_back(Element {
-            amount: fuel_input.amount * element.amount,
-            name: fuel_input.name.clone(),
-        });
+    let mut max_attempt = start_ore;
+    let mut min_attempt = 0;
+    loop {
+        let candidate = min_attempt + (max_attempt - min_attempt) / 2;
+        let total_ore_used = produce(
+            &reacts,
+            Element {
+                amount: candidate,
+                name: "FUEL".to_owned(),
+            },
+        );
+        if min_attempt == candidate {
+            return candidate;
+        }
+        if total_ore_used > start_ore {
+            max_attempt = candidate;
+        } else {
+            min_attempt = candidate;
+        }
     }
+}
+
+fn produce(reacts: &HashMap<Element, Vec<Element>>, element: Element) -> usize {
+    let mut stack: VecDeque<Element> = VecDeque::new();
+    let mut stash = HashMap::new();
+
+    stack.push_back(element);
+    let mut total_ore = 0;
 
     while !stack.is_empty() {
+        // get next ingredient needed, if it's ORE we can just add it
         let mut needed = stack.pop_front().unwrap();
-        if is_basic(&reacts, &needed) {
-            let entry = final_formula.entry(needed.name).or_insert(0);
-            *entry += needed.amount;
+        if needed.name == "ORE" {
+            total_ore += needed.amount;
             continue;
         }
 
+        // get the recipe and the base reaction, and check what we have in the stash
         let (base_reaction, ingredients) = reacts.get_key_value(&needed).unwrap();
         let stash_amount = stash.entry(needed.name.clone()).or_insert(0);
         if *stash_amount >= needed.amount {
@@ -87,12 +93,19 @@ fn produce_fuel(
             *stash_amount = 0;
         }
 
+        // if we don't have enough in the stash we'll figure out how much we
+        // need to make after accounting for the stash and if we end up making
+        // extra we'll put the extra in the stash and the rest will be used away
         let reaction_number_needed = round_division(needed.amount, base_reaction.amount);
         let produced_amount = reaction_number_needed * base_reaction.amount;
         if produced_amount > needed.amount {
             *stash_amount += produced_amount - needed.amount;
         }
 
+        // Now that we know how much to make, we make it and so we find the
+        // amount of ingredients that are needed and add them to the stack that
+        // we need to make. The amount is obviouly dependent on the number of
+        // reactions needed to deliver them.
         for ingredient in ingredients {
             let ingredient_needed_amount = ingredient.amount * reaction_number_needed;
             let new_name = ingredient.name.clone();
@@ -101,18 +114,6 @@ fn produce_fuel(
                 name: new_name,
             });
         }
-    }
-
-    let mut total_ore = 0;
-    for (element_name, amount) in final_formula {
-        let (el, ore) = reacts
-            .get_key_value(&Element {
-                amount: amount,
-                name: element_name,
-            })
-            .unwrap();
-        let more_ore = round_division(amount, el.amount) * ore[0].amount;
-        total_ore += more_ore;
     }
     total_ore
 }
@@ -124,18 +125,7 @@ fn round_division(a: usize, b: usize) -> usize {
     a / b + 1
 }
 
-fn is_basic(reacts: &HashMap<Element, Vec<Element>>, e: &Element) -> bool {
-    let formula = reacts.get(e).unwrap();
-    if formula.len() != 1 {
-        return false;
-    }
-    if formula[0].name != "ORE" {
-        return false;
-    }
-    true
-}
-
-pub fn part2(input: &str) -> impl Display {
+fn parse(input: &str) -> HashMap<Element, Vec<Element>> {
     let mut reacts = HashMap::new();
     for line in input.lines() {
         let comp = line.trim().split(" => ").collect::<Vec<&str>>();
@@ -146,44 +136,5 @@ pub fn part2(input: &str) -> impl Display {
             .collect::<Vec<Element>>();
         reacts.insert(Element::from_str(comp[1]), formula);
     }
-
-    let first_fuel = part1(input);
-    let fuel_reaction = reacts
-        .get(&Element {
-            amount: 1,
-            name: "FUEL".to_owned(),
-        })
-        .unwrap();
-
-    let start_ore: usize = 1000000000000;
-
-    let mut max_attempt = start_ore;
-    let mut min_attempt = 0;
-    loop {
-        let candidate = min_attempt + (max_attempt - min_attempt) / 2;
-        let total_ore_used = produce_fuel(
-            &reacts,
-            &mut HashMap::new(),
-            &Element {
-                amount: candidate,
-                name: "FUEL".to_owned(),
-            },
-        );
-        let total_ore_used_and_one = produce_fuel(
-            &reacts,
-            &mut HashMap::new(),
-            &Element {
-                amount: candidate + 1,
-                name: "FUEL".to_owned(),
-            },
-        );
-        if total_ore_used_and_one > start_ore && total_ore_used < start_ore {
-            return candidate;
-        }
-        if total_ore_used > start_ore {
-            max_attempt = candidate;
-        } else {
-            min_attempt = candidate;
-        }
-    }
+    reacts
 }
