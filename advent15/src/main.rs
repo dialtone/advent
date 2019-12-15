@@ -21,8 +21,9 @@ fn main() {
     let mut contents = String::new();
     file.read_to_string(&mut contents).unwrap();
 
-    let (part1_solution, part1_duration) = timed(|| solution::part1(&contents));
-    let (part2_solution, part2_duration) = timed(|| solution::part2(&contents));
-    println!("part 1: {} timed: {:?}", part1_solution, part1_duration);
-    println!("part 2: {} timed: {:?}", part2_solution, part2_duration);
+    let (part12_solution, part12_duration) = timed(|| solution::part12(&contents));
+    println!(
+        "part 1 and 2: {:?} timed: {:?}",
+        part12_solution, part12_duration
+    );
 }

@@ -74,6 +74,15 @@ impl Drone {
         }
     }
 
+    fn reset(&mut self) {
+        // resets everything but not the computer.
+        self.pos = (0, 0);
+        self.maze = HashMap::new();
+        self.maze.insert(self.pos, Cell::new(self.pos, 'D', 0));
+        self.oxygen_found = false;
+        self.distance = 0;
+    }
+
     fn print(&self) {
         go_to_top();
         println!(
@@ -161,24 +170,31 @@ impl Drone {
     }
 }
 
-pub fn part1(input: &str) -> impl Display {
+pub fn part12(input: &str) -> (isize, isize) {
     clear_screen();
 
     let mut paused_drones: VecDeque<Drone> = VecDeque::new();
     let mut drone = Drone::new(input);
     drone.print();
     let mut rng = thread_rng();
+    let mut oxygen_drone = drone.clone();
     loop {
         let mut next_directions = drone.explore();
         if drone.oxygen_found {
             drone.print();
             println!("OXYGEN FOUND");
-            break;
+            oxygen_drone = drone.clone();
         }
         if next_directions.len() == 0 {
             // dead end, so "backtrack" to a previous known state
-            drone = paused_drones.pop_back().unwrap();
-            continue;
+            if let Some(mut newdrone) = paused_drones.pop_back() {
+                newdrone.maze.extend(drone.maze);
+                drone = newdrone;
+                continue;
+            } else {
+                // drones are done
+                break;
+            }
         }
 
         next_directions.shuffle(&mut rng);
@@ -189,9 +205,37 @@ pub fn part1(input: &str) -> impl Display {
         }
         drone = paused_drones.pop_back().unwrap();
     }
-    // oxygen will be found in the explore phase where distance isn't updated,
-    // but so whatever the drone distance is, just add 1.
-    drone.distance + 1
+
+    let oxygen_distance = oxygen_drone.distance;
+    drone = oxygen_drone;
+    let mut longest_drone_distance = 0;
+    drone.reset(); // forget the map and redo this from the oxygen now
+    loop {
+        let mut next_directions = drone.explore();
+        if next_directions.len() == 0 {
+            // dead end, so "backtrack" to a previous known state
+            if let Some(mut newdrone) = paused_drones.pop_back() {
+                newdrone.maze.extend(drone.maze);
+                if drone.distance > longest_drone_distance {
+                    longest_drone_distance = drone.distance;
+                }
+                drone = newdrone;
+                continue;
+            } else {
+                // drones are done
+                break;
+            }
+        }
+
+        next_directions.shuffle(&mut rng);
+        for next_direction in next_directions {
+            let mut newdrone = drone.clone();
+            newdrone.step(next_direction, 1);
+            paused_drones.push_back(newdrone);
+        }
+        drone = paused_drones.pop_back().unwrap();
+    }
+    (oxygen_distance, longest_drone_distance)
 }
 
 //
@@ -234,10 +278,4 @@ fn go_to_top() {
 
 fn clear_screen() {
     print!("{}[2J", 27 as char);
-}
-pub fn part2(input: &str) -> impl Display {
-    let mut computer = intcode::Computer::from(input);
-    computer.run();
-
-    0
 }
