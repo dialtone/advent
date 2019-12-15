@@ -126,6 +126,10 @@ fn round_division(a: usize, b: usize) -> usize {
 }
 
 fn parse(input: &str) -> HashMap<Element, Vec<Element>> {
+    // just to be clear here... the hashing is technically incorrect for this
+    // hashmap, but it works because in the input you can only find one way to
+    // product that type of output. So it hashes on the element name, and the
+    // amount is considered to be that of the basic form.
     let mut reacts = HashMap::new();
     for line in input.lines() {
         let comp = line.trim().split(" => ").collect::<Vec<&str>>();
