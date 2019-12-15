@@ -209,6 +209,7 @@ pub fn part12(input: &str) -> (isize, isize) {
     let oxygen_distance = oxygen_drone.distance;
     drone = oxygen_drone;
     let mut longest_drone_distance = 0;
+    clear_screen();
     drone.reset(); // forget the map and redo this from the oxygen now
     loop {
         let mut next_directions = drone.explore();
