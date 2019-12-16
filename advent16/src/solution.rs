@@ -1,8 +1,6 @@
-use num::range_step;
 use std::fmt::Display;
 use std::iter;
 use std::iter::FromIterator;
-//use prefix_sum::PrefixSum;
 
 const PHASES: usize = 100;
 
@@ -42,28 +40,21 @@ fn multiply(number: &Vec<isize>, repeats: usize) -> isize {
 }
 
 pub fn part2(input: &str) -> impl Display {
-    let input_list = iter::repeat(parse(input))
+    let offset = input[..7].parse::<usize>().unwrap();
+
+    let mut input_list = iter::repeat(parse(input))
         .take(10000)
         .flatten()
-        .collect::<Vec<isize>>();
-
-    let offset = String::from_iter(input_list[0..7].iter().map(|&x| x.to_string()))
-        .parse::<usize>()
-        .unwrap();
-
-    let mut actual_start = input_list
-        .iter()
-        .skip(offset)
-        .map(|&x| x)
+        .skip(offset as usize)
         .collect::<Vec<isize>>();
 
     for _ in 0..PHASES {
         let mut running_sum = 0;
-        for number_idx in range_step((actual_start.len() - 1) as isize, -1 as isize, -1) {
-            running_sum += actual_start[number_idx as usize];
-            actual_start[number_idx as usize] = running_sum % 10;
+        for number_idx in (0..input_list.len() - 1).rev() {
+            running_sum += input_list[number_idx as usize];
+            input_list[number_idx as usize] = running_sum % 10;
         }
     }
 
-    String::from_iter(actual_start[0..8].iter().map(|&x| x.to_string()))
+    input_list[..8].iter().fold(0isize, |a, &n| a * 10 + n)
 }
