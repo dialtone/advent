@@ -2,7 +2,6 @@ use crate::intcode;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 use std::collections::{HashMap, VecDeque};
-use std::fmt::Display;
 use std::iter::FromIterator;
 use std::thread::sleep;
 use std::time::Duration;
@@ -11,7 +10,6 @@ use std::time::Duration;
 struct Cell {
     loc: (isize, isize),
     content: char,
-    weight: usize,
     is_explored: bool,
     distance: isize,
 }
@@ -21,7 +19,6 @@ impl Cell {
         Cell {
             loc: loc,
             content: content,
-            weight: 1,
             is_explored: false,
             distance: distance,
         }
