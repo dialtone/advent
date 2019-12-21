@@ -141,12 +141,12 @@ fn is_outer(loc: Point, topl: Point, botr: Point) -> bool {
 }
 
 pub fn part1(input: &str) -> impl Display {
-    clear_screen();
+    //clear_screen();
     let maze = parse(input);
-    print(&maze);
+    //print(&maze);
 
     let (start, stop, portals) = get_start_stop_and_portals(&maze);
-    distance(&maze, &portals, start, stop)
+    distance(&maze, &portals, start, stop, false)
 }
 
 fn distance(
@@ -154,6 +154,7 @@ fn distance(
     portals: &HashMap<Point, (Point, isize)>, // new isize
     from: Point,
     to: Point,
+    levels: bool,
 ) -> usize {
     let mut visited = HashSet::new();
     let mut drones: VecDeque<(usize, Point, isize)> = VecDeque::new();
@@ -174,7 +175,12 @@ fn distance(
             continue;
         }
 
-        if visit.1 == to && visit.2 == 0 {
+        if levels {
+            if visit.1 == to && visit.2 == 0 {
+                distance = visit.0;
+                break;
+            }
+        } else if visit.1 == to {
             distance = visit.0;
             break;
         }
@@ -198,7 +204,12 @@ fn distance(
 }
 
 pub fn part2(input: &str) -> impl Display {
-    0
+    //clear_screen();
+    let maze = parse(input);
+    //print(&maze);
+
+    let (start, stop, portals) = get_start_stop_and_portals(&maze);
+    distance(&maze, &portals, start, stop, true)
 }
 
 fn next_col(pos: Point) -> Point {
