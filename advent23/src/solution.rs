@@ -75,6 +75,7 @@ pub fn part2(input: &str) -> isize {
                 let y = computer.pop_output().unwrap();
                 print!(".");
                 if send_address == 255 {
+                    println!("Sent to NAT ({}, {})", x, y);
                     nat.push((x, y));
                     continue;
                 }
