@@ -70,14 +70,9 @@ fn print_quadrant(maze: &HashMap<Point, char>, ((min_x, min_y), (max_x, max_y)):
 }
 
 pub fn part1(input: &str) -> impl Display {
-    //solve_part1(input)
-    0
-}
-
-fn solve_part1(input: &str) -> impl Display {
-    clear_screen();
+    // clear_screen();
     let maze = parse(input);
-    print(&maze);
+    // print(&maze);
 
     let pos = *maze.iter().filter(|(&_, &v)| v == '@').collect::<Vec<_>>()[0].0;
     let mut keys = HashMap::new();
@@ -87,7 +82,7 @@ fn solve_part1(input: &str) -> impl Display {
             keys.insert(v, k);
         }
     }
-    println!("Hi from {:?}", pos);
+    // println!("Hi from {:?}", pos);
 
     let mut distances = HashMap::new();
 
@@ -152,7 +147,7 @@ fn solve_part1(input: &str) -> impl Display {
             }
         }
     }
-    println!("Path: {:?}", shortest_path.1);
+    // println!("Path: {:?}", shortest_path.1);
     shortest_path.0
 }
 
@@ -194,7 +189,7 @@ fn distance(maze: &HashMap<Point, char>, from: Point, to: Point) -> (usize, Vec<
 }
 
 pub fn part2(input: &str) -> impl Display {
-    clear_screen();
+    // clear_screen();
 
     let mut maze = parse(input);
     let pos = *maze.iter().filter(|(&_, &v)| v == '@').collect::<Vec<_>>()[0].0;
@@ -210,7 +205,7 @@ pub fn part2(input: &str) -> impl Display {
     maze.insert((pos.0 - 1, pos.1 - 1), '@');
     maze.insert((pos.0 - 1, pos.1 + 1), '@');
 
-    print(&maze);
+    // print(&maze);
 
     let ((min_x, min_y), (max_x, max_y)) = edges(&maze);
 
@@ -241,25 +236,25 @@ pub fn part2(input: &str) -> impl Display {
         }
     }
 
-    clear_screen();
-    go_to_top();
-    println!("Original start {:?}", pos);
-    println!("Starts {:?}", starts);
-    println!("Quadrants {:?}", quadrants);
+    // clear_screen();
+    // go_to_top();
+    // println!("Original start {:?}", pos);
+    // println!("Starts {:?}", starts);
+    // println!("Quadrants {:?}", quadrants);
     let mut total_distance = 0;
     for (i, &quadrant) in quadrants.iter().enumerate() {
         let start = starts[i];
-        println!("Starts at {:?}", start);
+        // println!("Starts at {:?}", start);
         let in_quadrant_keys = keys
             .iter()
             .filter(|&(_k, &&kpos)| in_quadrant(kpos, quadrant))
             .collect::<Vec<_>>();
-        println!("Keys {:?}", in_quadrant_keys);
-        print_quadrant(&maze, quadrant);
+        // println!("Keys {:?}", in_quadrant_keys);
+        // print_quadrant(&maze, quadrant);
 
         let mut distances = HashMap::new();
         for (&&key, &&kpos) in &in_quadrant_keys {
-            println!("{} {:?}", key, kpos);
+            // println!("{} {:?}", key, kpos);
             let dist_keys = distance(&maze, start, kpos);
             distances.insert((start, kpos), dist_keys.clone());
             distances.insert((kpos, start), dist_keys);
@@ -268,25 +263,21 @@ pub fn part2(input: &str) -> impl Display {
                 if otherkey == key {
                     continue;
                 }
-                println!("otherkey {} {:?}", otherkey, otherkpos);
+                // println!("otherkey {} {:?}", otherkey, otherkpos);
                 let dist_keys = distance(&maze, kpos, otherkpos);
                 distances.insert((kpos, otherkpos), dist_keys.clone());
                 distances.insert((otherkpos, kpos), dist_keys);
             }
         }
 
-        println!("Distances: {:?}", distances);
+        // println!("Distances: {:?}", distances);
 
         // Here each quadrant can be solved independently since you can assume
         // that the other robots will unlock the keys you need when you need
-        // basically, and you can solve each quadrant however you want really to
-        // collect the keys AFAIK
+        // so you just need to do bfs on the 4 quadrants independently given
+        // they have no keys in common.
 
         let mut shortest_path = (usize::max_value(), vec![]);
-        // one could avoid the binary heap if you kept around a mapping
-        // between the best length and the set of keys and discard the paths
-        // that have a worse off length there. The binary heap is easier to deal
-        // with since it bubbles up the lowest distance paths automatically.
         let mut q = BinaryHeap::new();
         let mut visited = HashSet::new();
         q.push((Reverse(0), start, vec![]));
@@ -298,14 +289,11 @@ pub fn part2(input: &str) -> impl Display {
             sorted_keys.sort();
 
             if visited.contains(&(visit.1, sorted_keys.clone())) {
-                println!(">>>>>  visited");
-
-                // sometimes this drops the wrong set of keys
                 continue;
             }
 
             if visit.2.len() == in_quadrant_keys.len() {
-                println!("Paths {:?}", visit);
+                // println!("Paths {:?}", visit);
                 if shortest_path.0 > visit.0 .0 {
                     shortest_path = (visit.0 .0, visit.2.clone());
                     break;
@@ -316,35 +304,17 @@ pub fn part2(input: &str) -> impl Display {
 
             for (&&k, &&kpos) in &in_quadrant_keys {
                 if visit.2.contains(&k) {
-                    println!(">>>>>  contains");
+                    // println!(">>>>>  contains");
                     continue; // already collected
                 }
                 let dist_keys = distances.get(&(visit.1, kpos)).unwrap();
                 let mut kcollected = visit.2.clone();
                 kcollected.push(k);
                 let next_visit = (Reverse(visit.0 .0 + dist_keys.0), kpos, kcollected);
-                // println!("Next Step from {:?} to {:?}", visit, next_visit);
                 q.push(next_visit);
             }
         }
-        println!(">>>>>>>> {}", shortest_path.0);
         total_distance += shortest_path.0;
-        // let mut distances = HashMap::new();
-        // for (&&key, &&kpos) in &keys {
-        //     if is_in_quadrant()
-        //     let dist_keys = distance(&maze, pos, kpos);
-        //     distances.insert((pos, kpos), dist_keys.clone());
-        //     distances.insert((kpos, pos), dist_keys);
-
-        //     for (&&otherkey, &&otherkpos) in &keys {
-        //         if otherkey == key {
-        //             continue;
-        //         }
-        //         let dist_keys = distance(&maze, kpos, otherkpos);
-        //         distances.insert((kpos, otherkpos), dist_keys.clone());
-        //         distances.insert((otherkpos, kpos), dist_keys);
-        //     }
-        // }
     }
 
     total_distance
