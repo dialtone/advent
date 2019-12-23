@@ -1,6 +1,7 @@
 use std::fmt::Display;
 
-// part 1 I did, but eventually part 2 was just beyond my reach and I copied it.
+// part 1 I did, but eventually part 2 was just beyond my reach and I copied the
+// solution...
 
 #[derive(Debug)]
 enum Technique {
