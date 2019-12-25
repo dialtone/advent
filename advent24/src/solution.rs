@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::fmt::Display;
 
 fn parse(input: &str) -> u32 {
@@ -46,6 +46,16 @@ pub fn part1(input: &str) -> impl Display {
     }
 }
 
+fn print(name: &str, cell: u32) {
+    println!("{}", name);
+    for i in 0..25 {
+        print!("{} ", cell >> i & 0b1);
+        if (i + 1) % 5 == 0 {
+            println!()
+        }
+    }
+}
+
 pub fn part2(input: &str) -> impl Display {
     let mut world: Vec<u32> = vec![0b0; 300];
 
@@ -59,8 +69,7 @@ pub fn part2(input: &str) -> impl Display {
 
     // simulate 200 minutes
     let world_len = world.len() - 1;
-    for minute in 0..10 {
-        println!("Minute {}", minute);
+    for minute in 1..201 {
         let mut tmp_world = vec![0b0; 300];
         for level in 0..world_len {
             let outer = if level > 0 { world[level - 1] } else { 0b0 };
@@ -79,14 +88,17 @@ pub fn part2(input: &str) -> impl Display {
             let mut tmp = 0b0;
             for (i, mask) in same_level_masks.iter().enumerate() {
                 if i == 12 {
-                    continue; // skip the center for this
+                    continue; // skip the center spot
                 }
-
                 let inner_mask = get_inner_mask(i);
                 let outer_mask = get_outer_mask(i);
+                // this eliminates the center spot from bug counting
+                // let current_mask = !(1<<13) & mask;
+                let current_mask = 0b11111_11111_11011_11111_11111 & mask;
                 let inner_adjacents = inner & inner_mask;
                 let outer_adjacents = outer & outer_mask;
-                let adjacents = current & mask;
+                let adjacents = current & current_mask;
+
                 let bugs_around = adjacents.count_ones()
                     + inner_adjacents.count_ones()
                     + outer_adjacents.count_ones();
@@ -98,11 +110,12 @@ pub fn part2(input: &str) -> impl Display {
                     tmp |= 1 << i;
                 }
             }
-            print!("{}: {:b} ", level, tmp);
+            // println!();
+            // print(format!("Level {}", level).as_str(), tmp);
             tmp_world[level] = tmp;
         }
-        println!();
-        println!("-----------");
+        // println!();
+        // println!("-----------");
         world = tmp_world;
     }
 
@@ -110,13 +123,33 @@ pub fn part2(input: &str) -> impl Display {
 }
 
 fn get_outer_mask(pos: usize) -> u32 {
-    if pos < 5 {
+    if pos == 0 {
+        let mut mask = 0b0;
+        mask |= 1 << 7;
+        mask |= 1 << 11;
+        mask
+    } else if pos == 4 {
+        let mut mask = 0b0;
+        mask |= 1 << 7;
+        mask |= 1 << 13;
+        mask
+    } else if pos == 20 {
+        let mut mask = 0b0;
+        mask |= 1 << 11;
+        mask |= 1 << 17;
+        mask
+    } else if pos == 24 {
+        let mut mask = 0b0;
+        mask |= 1 << 13;
+        mask |= 1 << 17;
+        mask
+    } else if pos < 5 {
         // upper row, pos 8
         1 << 7
     } else if pos > 19 {
         // bottom row, pos 18
         1 << 17
-    } else if pos + 1 % 5 == 0 {
+    } else if (pos + 1) % 5 == 0 {
         // right row
         1 << 13
     } else if pos % 5 == 0 {
@@ -131,11 +164,11 @@ fn get_inner_mask(pos: usize) -> u32 {
     if pos == 7 {
         0b11111
     } else if pos == 13 {
-        0b00001_00001_00001_00001_00001
+        0b10000_10000_10000_10000_10000
     } else if pos == 17 {
         0b11111_00000_00000_00000_00000
     } else if pos == 11 {
-        0b10000_10000_10000_10000_10000
+        0b00001_00001_00001_00001_00001
     } else {
         0b0
     }
@@ -162,20 +195,3 @@ fn get_adjacency_map(pos: usize) -> u32 {
     }
     mask
 }
-
-// if the mask here touches the inner cell then we need to deal
-// with the masks there, that is if mask & 1<<13 is > 0
-// if it touches the outer cell we need to deal with it here
-// that is either pos < 5 or pos > 19 or pos+1%5==0 or pos%5==0
-// let inner_mask = if mask & 1 << 13 > 0 {
-//     // adjaciency with internal levels which go to the right
-//     get_inner_mask(i)
-// } else {
-//     0b0
-// };
-// let outer_mask = if i < 5 || i > 19 || i + 1 % 5 == 0 || i % 5 == 0 {
-//     // adjanciency with external levels which go to the left
-//     get_outer_mask(i)
-// } else {
-//     0b0
-// };
