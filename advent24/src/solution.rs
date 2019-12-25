@@ -92,9 +92,7 @@ pub fn part2(input: &str) -> impl Display {
                 }
                 let inner_mask = get_inner_mask(i);
                 let outer_mask = get_outer_mask(i);
-                // this eliminates the center spot from bug counting
-                // let current_mask = !(1<<13) & mask;
-                let current_mask = 0b11111_11111_11011_11111_11111 & mask;
+                let current_mask = mask;
                 let inner_adjacents = inner & inner_mask;
                 let outer_adjacents = outer & outer_mask;
                 let adjacents = current & current_mask;
