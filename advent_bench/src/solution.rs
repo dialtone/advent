@@ -6,12 +6,11 @@ pub fn run(input: &str, args: Vec<isize>) -> isize {
         computer.write_input(arg);
     }
 
-    loop {
-        if computer.has_output() {
-            break computer.pop_output().unwrap();
-        }
+    while !computer.has_halted() {
         computer.run();
     }
+
+    computer.pop_output().unwrap()
 }
 
 #[async_std::test]
