@@ -12,6 +12,22 @@ pub fn part1(input: &str) -> isize {
     // - sand
     // - shell
 
+    //                             astrolabe (supply measurements)
+    //                             |
+    //                             Pod
+    //                             |
+    //                             Sand->no power->mutex
+    //                             |
+    //                             |
+    //                             |   observatory(shell)
+    //                             |     |
+    //                             S->holodeck
+    //                                 |
+    // engineering(photons no) <-sick bay (giant electromagnet) -> hot chocolate fountain (ornament) -> gift
+    //                                                                                              wrapping
+    //                                                                                                 |
+    //                                                                                              security
+
     let stdin = io::stdin();
     while !computer.has_halted() {
         if computer.has_output() {
