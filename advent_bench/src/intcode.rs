@@ -36,7 +36,7 @@ impl Computer {
         Computer::new(
             program
                 .trim()
-                .split(",")
+                .split(',')
                 .map(|x| x.parse::<isize>().unwrap())
                 .collect(),
         )
@@ -143,31 +143,31 @@ impl Computer {
         self.store_mem(store_pos, value);
     }
 
-    fn adjust_rel_base(&mut self, params_mode: Vec<isize>) {
-        let first_param = self.load(params_mode[0], 1);
+    fn adjust_rel_base(&mut self, params_mode: Modes) {
+        let first_param = self.load(params_mode.0, 1);
         self.rel_base += first_param;
         self.pos += 2;
     }
 
-    fn add(&mut self, params_mode: Vec<isize>) {
-        let first_param = self.load(params_mode[0], 1);
-        let second_param = self.load(params_mode[1], 2);
-        self.store(params_mode[2], 3, first_param + second_param);
+    fn add(&mut self, params_mode: Modes) {
+        let first_param = self.load(params_mode.0, 1);
+        let second_param = self.load(params_mode.1, 2);
+        self.store(params_mode.2, 3, first_param + second_param);
         self.pos += 4;
     }
 
-    fn mul(&mut self, params_mode: Vec<isize>) {
-        let first_param = self.load(params_mode[0], 1);
-        let second_param = self.load(params_mode[1], 2);
-        self.store(params_mode[2], 3, first_param * second_param);
+    fn mul(&mut self, params_mode: Modes) {
+        let first_param = self.load(params_mode.0, 1);
+        let second_param = self.load(params_mode.1, 2);
+        self.store(params_mode.2, 3, first_param * second_param);
         self.pos += 4;
     }
 
-    fn input(&mut self, params_mode: Vec<isize>) {
+    fn input(&mut self, params_mode: Modes) {
         match self.read_input() {
             None => self.state = State::Wait,
             Some(value) => {
-                self.store(params_mode[0], 1, value);
+                self.store(params_mode.0, 1, value);
                 self.pos += 2;
             }
         }
@@ -177,60 +177,58 @@ impl Computer {
         self.inputs.pop_front()
     }
 
-    fn output(&mut self, params_mode: Vec<isize>) {
-        let out = self.load(params_mode[0], 1);
+    fn output(&mut self, params_mode: Modes) {
+        let out = self.load(params_mode.0, 1);
         self.outputs.push_back(out);
         self.pos += 2;
         self.state = State::Output;
     }
 
-    fn jump_if_true(&mut self, params_mode: Vec<isize>) {
-        let first_param = self.load(params_mode[0], 1);
+    fn jump_if_true(&mut self, params_mode: Modes) {
+        let first_param = self.load(params_mode.0, 1);
         if first_param != 0 {
-            let second_param = self.load(params_mode[1], 2);
+            let second_param = self.load(params_mode.1, 2);
             self.pos = second_param as usize;
         } else {
             self.pos += 3;
         }
     }
 
-    fn jump_if_false(&mut self, params_mode: Vec<isize>) {
-        let first_param = self.load(params_mode[0], 1);
+    fn jump_if_false(&mut self, params_mode: Modes) {
+        let first_param = self.load(params_mode.0, 1);
         if first_param == 0 {
-            let second_param = self.load(params_mode[1], 2);
+            let second_param = self.load(params_mode.1, 2);
             self.pos = second_param as usize;
         } else {
             self.pos += 3;
         }
     }
 
-    fn lt(&mut self, params_mode: Vec<isize>) {
-        let first_param = self.load(params_mode[0], 1);
-        let second_param = self.load(params_mode[1], 2);
+    fn lt(&mut self, params_mode: Modes) {
+        let first_param = self.load(params_mode.0, 1);
+        let second_param = self.load(params_mode.1, 2);
         if first_param < second_param {
-            self.store(params_mode[2], 3, 1);
+            self.store(params_mode.2, 3, 1);
         } else {
-            self.store(params_mode[2], 3, 0);
+            self.store(params_mode.2, 3, 0);
         }
         self.pos += 4
     }
 
-    fn eq(&mut self, params_mode: Vec<isize>) {
-        let first_param = self.load(params_mode[0], 1);
-        let second_param = self.load(params_mode[1], 2);
+    fn eq(&mut self, params_mode: Modes) {
+        let first_param = self.load(params_mode.0, 1);
+        let second_param = self.load(params_mode.1, 2);
         if first_param == second_param {
-            self.store(params_mode[2], 3, 1);
+            self.store(params_mode.2, 3, 1);
         } else {
-            self.store(params_mode[2], 3, 0);
+            self.store(params_mode.2, 3, 0);
         }
         self.pos += 4
     }
 }
 
-fn parse_mode(mode: isize) -> Vec<isize> {
-    let mut v = Vec::new();
-    v.push(mode % 10);
-    v.push(mode / 10 % 10);
-    v.push(mode / 100 % 10);
-    v
+type Modes = (isize, isize, isize);
+
+fn parse_mode(mode: isize) -> Modes {
+    (mode % 10, mode / 10 % 10, mode / 100 % 10)
 }
